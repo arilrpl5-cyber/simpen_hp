@@ -1,0 +1,921 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117; --bg2: #161b22; --bg3: #1c2128;
+    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
+    --text: #e6edf3; --text2: #8b949e; --text3: #6e7681;
+    --accent: #58a6ff; --accent2: #1f6feb;
+    --green: #3fb950; --green-bg: rgba(63,185,80,0.12);
+    --yellow: #d29922; --yellow-bg: rgba(210,153,34,0.12);
+    --red: #f85149; --red-bg: rgba(248,81,73,0.12);
+    --blue-bg: rgba(88,166,255,0.1);
+    --sidebar-w: 220px;
+    --font: 'Segoe UI', system-ui, sans-serif;
+  }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; font-size: 14px; }
+  
+  /* SIDEBAR */
+  #sidebar {
+    width: var(--sidebar-w); background: var(--bg2); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100;
+  }
+  .brand { padding: 20px 16px; border-bottom: 1px solid var(--border); }
+  .brand-title { font-size: 15px; font-weight: 700; color: var(--accent); letter-spacing: 0.5px; }
+  .brand-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .nav-section { padding: 12px 8px 4px; font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px; margin: 1px 4px;
+    border-radius: 6px; cursor: pointer; color: var(--text2); font-size: 13px; transition: all .15s;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: var(--blue-bg); color: var(--accent); }
+  .nav-icon { width: 16px; text-align: center; font-size: 14px; }
+  .clock { padding: 12px 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text3); margin-top: auto; }
+  .clock-time { font-size: 18px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+  
+  /* MAIN */
+  #main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .topbar-title { font-size: 16px; font-weight: 600; }
+  .topbar-date { font-size: 12px; color: var(--text2); }
+  .content { padding: 24px; flex: 1; }
+  
+  /* PAGE */
+  .page { display: none; }
+  .page.active { display: block; }
+  
+  /* CARDS */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .card-title { font-size: 14px; font-weight: 600; }
+  
+  /* METRIC CARDS */
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .metric { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .metric-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .metric-value { font-size: 28px; font-weight: 700; margin: 6px 0 2px; }
+  .metric-sub { font-size: 11px; color: var(--text2); }
+  .metric.blue .metric-value { color: var(--accent); }
+  .metric.green .metric-value { color: var(--green); }
+  .metric.yellow .metric-value { color: var(--yellow); }
+  .metric.red .metric-value { color: var(--red); }
+  
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text2); }
+  tr:hover td { background: var(--bg3); }
+  tr:last-child td { border-bottom: none; }
+  
+  /* BADGE */
+  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-yellow { background: var(--yellow-bg); color: var(--yellow); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+  .badge-blue { background: var(--blue-bg); color: var(--accent); }
+  
+  /* FORM */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 12px; font-weight: 500; color: var(--text2); }
+  input, select, textarea {
+    background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px;
+    padding: 9px 12px; color: var(--text); font-size: 13px; font-family: var(--font);
+    transition: border-color .15s; outline: none; width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(88,166,255,0.1); }
+  select option { background: var(--bg3); }
+  textarea { resize: vertical; min-height: 80px; }
+  
+  /* BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+    border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid transparent; transition: all .15s; font-family: var(--font);
+  }
+  .btn-primary { background: var(--accent2); color: #fff; border-color: var(--accent2); }
+  .btn-primary:hover { background: var(--accent); }
+  .btn-secondary { background: transparent; color: var(--text2); border-color: var(--border2); }
+  .btn-secondary:hover { background: var(--bg3); color: var(--text); }
+  .btn-danger { background: transparent; color: var(--red); border-color: rgba(248,81,73,0.4); }
+  .btn-danger:hover { background: var(--red-bg); }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-success { background: transparent; color: var(--green); border-color: rgba(63,185,80,0.4); }
+  .btn-success:hover { background: var(--green-bg); }
+  
+  /* SEARCH & FILTER */
+  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+  .toolbar input { max-width: 220px; }
+  .toolbar select { max-width: 160px; }
+  .spacer { flex: 1; }
+  
+  /* NOTIFICATION */
+  #notif {
+    position: fixed; top: 20px; right: 20px; z-index: 9999;
+    background: var(--bg2); border: 1px solid var(--border2); border-radius: 8px;
+    padding: 12px 20px; font-size: 13px; display: none; max-width: 300px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  #notif.show { display: block; animation: slideIn .2s ease; }
+  #notif.success { border-left: 3px solid var(--green); }
+  #notif.error { border-left: 3px solid var(--red); }
+  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  
+  
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500;
+    display: flex; align-items: center; justify-content: center; display: none;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: 10px; padding: 24px; min-width: 460px; max-width: 560px; width: 100%; }
+  .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  
+  
+  .status-normal td { }
+  .status-warning td:first-child { border-left: 2px solid var(--yellow); }
+  .status-danger td:first-child { border-left: 2px solid var(--red); }
+  
+  
+  .detail-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .detail-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { color: var(--text3); }
+  .detail-value { color: var(--text); font-weight: 500; }
+  
+  .pagination { display: flex; gap: 4px; align-items: center; margin-top: 16px; }
+  .page-btn { padding: 4px 10px; border: 1px solid var(--border2); border-radius: 4px; background: transparent; color: var(--text2); cursor: pointer; font-size: 12px; }
+  .page-btn.active { background: var(--accent2); color: #fff; border-color: var(--accent2); }
+  .page-btn:hover:not(.active) { background: var(--bg3); }
+  
+  .section-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .section-sub { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
+  
+  .ref-number { font-family: monospace; font-size: 11px; color: var(--text3); }
+  .success-banner { background: var(--green-bg); border: 1px solid rgba(63,185,80,0.3); border-radius: 8px; padding: 16px; margin-bottom: 20px; color: var(--green); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div class="brand">
+    <div class="brand-title">📱 SIMPEN HP</div>
+    <div class="brand-sub">Sistem Manajemen Peminjaman HP</div>
+  </div>
+  <div class="nav-section">Utama</div>
+  <div class="nav-item active" onclick="goPage('dashboard')"><span class="nav-icon">⊞</span> Dashboard</div>
+  <div class="nav-section">Peminjaman</div>
+  <div class="nav-item" onclick="goPage('pinjam')"><span class="nav-icon">➕</span> Form Peminjaman</div>
+  <div class="nav-item" onclick="goPage('daftar')"><span class="nav-icon">📋</span> HP Dipinjam</div>
+  <div class="nav-item" onclick="goPage('kembali')"><span class="nav-icon">↩</span> Pengembalian</div>
+  <div class="nav-section">Laporan</div>
+  <div class="nav-item" onclick="goPage('laporan')"><span class="nav-icon">📊</span> Laporan Harian</div>
+  <div class="nav-section">Master Data</div>
+  <div class="nav-item" onclick="goPage('siswa')"><span class="nav-icon">👥</span> Data Siswa</div>
+  <div class="clock">
+    <div class="clock-time" id="clock-time">00:00:00</div>
+    <div id="clock-date" style="font-size:11px;margin-top:2px;"></div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-date" id="topbar-date"></div>
+  </div>
+  <div class="content">
+
+    
+    <div class="page active" id="page-dashboard">
+      <div class="section-title">Selamat Datang 👋</div>
+      <div class="section-sub">Guru Piket — Sistem Informasi Peminjaman HP Siswa</div>
+      <div class="metrics">
+        <div class="metric blue"><div class="metric-label">HP Dipinjam</div><div class="metric-value" id="m-aktif">0</div><div class="metric-sub">saat ini aktif</div></div>
+        <div class="metric green"><div class="metric-label">Peminjaman Hari Ini</div><div class="metric-value" id="m-hari">0</div><div class="metric-sub">total transaksi</div></div>
+        <div class="metric yellow"><div class="metric-label">Total Siswa</div><div class="metric-value" id="m-siswa">0</div><div class="metric-sub">terdaftar</div></div>
+        <div class="metric red"><div class="metric-label">HP Lama (&gt;1 jam)</div><div class="metric-value" id="m-lama">0</div><div class="metric-sub">perlu perhatian</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Peminjaman Aktif Saat Ini</span><button class="btn btn-secondary btn-sm" onclick="goPage('pinjam')">+ Tambah Peminjaman</button></div>
+        <table id="dash-table">
+          <thead><tr><th>Siswa</th><th>Kelas</th><th>Jam Pinjam</th><th>Durasi</th><th>Alasan</th><th>Status</th></tr></thead>
+          <tbody id="dash-tbody"></tbody>
+        </table>
+        <div id="dash-empty" style="text-align:center;padding:32px;color:var(--text3);display:none;">Tidak ada peminjaman aktif saat ini</div>
+      </div>
+    </div>
+
+    
+    <div class="page" id="page-pinjam">
+      <div class="section-title">Form Peminjaman HP</div>
+      <div class="section-sub">Catat siswa yang meminjam HP</div>
+      <div id="pinjam-success" class="success-banner" style="display:none;"></div>
+      <div class="card">
+        <div class="form-grid">
+          <div class="form-group"><label>Pilih Siswa *</label>
+            <select id="f-siswa" onchange="autoFillKelas()">
+              <option value="">-- Pilih Siswa --</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Kelas (auto-fill)</label><input type="text" id="f-kelas" readonly placeholder="Otomatis terisi" style="background:var(--bg);"></div>
+          <div class="form-group"><label>Jam Pinjam *</label><input type="time" id="f-jam" required></div>
+          <div class="form-group"><label>Tanggal *</label><input type="date" id="f-tanggal" required></div>
+          <div class="form-group full"><label>Alasan Peminjaman *</label>
+            <select id="f-alasan">
+              <option value="">-- Pilih Alasan --</option>
+              <option value="Tugas">Tugas Sekolah</option>
+              <option value="Emergency">Keperluan Darurat</option>
+              <option value="Komunikasi">Komunikasi Orang Tua</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div class="form-group full"><label>Catatan Tambahan</label><textarea id="f-catatan" placeholder="Catatan opsional..."></textarea></div>
+        </div>
+        <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px;">
+          <button class="btn btn-secondary" onclick="resetPinjam()">Reset</button>
+          <button class="btn btn-primary" onclick="submitPinjam()">💾 Simpan Peminjaman</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-daftar">
+      <div class="section-title">HP Sedang Dipinjam</div>
+      <div class="section-sub">Daftar real-time HP yang sedang dipinjam siswa</div>
+      <div class="card">
+        <div class="toolbar">
+          <input type="text" placeholder="🔍 Cari nama siswa..." id="search-daftar" oninput="renderDaftar()">
+          <select id="filter-kelas-daftar" onchange="renderDaftar()">
+            <option value="">Semua Kelas</option>
+          </select>
+          <span class="spacer"></span>
+          <span style="font-size:12px;color:var(--text3);">Auto-update setiap menit</span>
+        </div>
+        <table>
+          <thead><tr><th>No. Ref</th><th>Siswa</th><th>Kelas</th><th>Jam Pinjam</th><th>Durasi</th><th>Alasan</th><th>Status</th><th>Aksi</th></tr></thead>
+          <tbody id="daftar-tbody"></tbody>
+        </table>
+        <div id="daftar-empty" style="text-align:center;padding:32px;color:var(--text3);display:none;">Tidak ada HP yang sedang dipinjam</div>
+      </div>
+    </div>
+
+    
+    <div class="page" id="page-kembali">
+      <div class="section-title">Pengembalian HP</div>
+      <div class="section-sub">Proses pengembalian HP siswa</div>
+      <div id="kembali-success" class="success-banner" style="display:none;"></div>
+      <div class="card">
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Pilih Peminjaman Aktif *</label>
+          <select id="k-loan" onchange="loadLoanDetail()">
+            <option value="">-- Pilih Peminjaman --</option>
+          </select>
+        </div>
+        <div id="loan-detail" style="display:none;">
+          <div class="detail-card">
+            <div class="detail-row"><span class="detail-label">Siswa</span><span class="detail-value" id="k-nama"></span></div>
+            <div class="detail-row"><span class="detail-label">Kelas</span><span class="detail-value" id="k-kelas-d"></span></div>
+            <div class="detail-row"><span class="detail-label">Jam Pinjam</span><span class="detail-value" id="k-jam-pinjam"></span></div>
+            <div class="detail-row"><span class="detail-label">Durasi</span><span class="detail-value" id="k-durasi"></span></div>
+            <div class="detail-row"><span class="detail-label">Alasan</span><span class="detail-value" id="k-alasan"></span></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label>Jam Kembali *</label><input type="time" id="k-jam-kembali"></div>
+            <div class="form-group"><label>Kondisi HP *</label>
+              <select id="k-kondisi" onchange="toggleRusak()">
+                <option value="">-- Pilih Kondisi --</option>
+                <option value="Baik">Baik</option>
+                <option value="Sedikit Rusak">Sedikit Rusak</option>
+                <option value="Rusak Parah">Rusak Parah</option>
+                <option value="Hilang">Hilang</option>
+              </select>
+            </div>
+            <div class="form-group full" id="rusak-detail-group" style="display:none;">
+              <label>Detail Kerusakan *</label>
+              <textarea id="k-rusak" placeholder="Jelaskan kerusakan yang terjadi..."></textarea>
+            </div>
+          </div>
+          <div style="margin-top:20px;display:flex;justify-content:flex-end;">
+            <button class="btn btn-primary" onclick="submitKembali()">✅ Proses Pengembalian</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="page" id="page-laporan">
+      <div class="section-title">Laporan Harian</div>
+      <div class="section-sub">Rekap peminjaman HP per hari</div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="toolbar" style="margin-bottom:0;">
+          <div class="form-group" style="flex:1;">
+            <label>Filter Tanggal</label>
+            <input type="date" id="lap-tanggal" onchange="renderLaporan()">
+          </div>
+          <div style="align-self:flex-end;">
+            <button class="btn btn-secondary btn-sm" onclick="renderLaporan()">🔄 Tampilkan</button>
+          </div>
+        </div>
+      </div>
+      <div class="metrics" style="margin-bottom:20px;">
+        <div class="metric blue"><div class="metric-label">Total Peminjaman</div><div class="metric-value" id="l-total">0</div></div>
+        <div class="metric green"><div class="metric-label">Sudah Dikembalikan</div><div class="metric-value" id="l-selesai">0</div></div>
+        <div class="metric blue"><div class="metric-label">Masih Dipinjam</div><div class="metric-value" id="l-aktif">0</div></div>
+        <div class="metric yellow"><div class="metric-label">Rata-rata Durasi</div><div class="metric-value" id="l-avg">-</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Detail Peminjaman</span></div>
+        <table>
+          <thead><tr><th>Ref</th><th>Siswa</th><th>Kelas</th><th>Jam Pinjam</th><th>Jam Kembali</th><th>Durasi</th><th>Alasan</th><th>Kondisi</th><th>Status</th></tr></thead>
+          <tbody id="laporan-tbody"></tbody>
+        </table>
+        <div id="lap-empty" style="text-align:center;padding:32px;color:var(--text3);display:none;">Tidak ada data untuk tanggal ini</div>
+      </div>
+    </div>
+
+    
+    <div class="page" id="page-siswa">
+      <div class="section-title">Manajemen Data Siswa</div>
+      <div class="section-sub">CRUD data siswa terdaftar</div>
+      <div class="card">
+        <div class="toolbar">
+          <input type="text" placeholder="🔍 Cari nama / NIS..." id="search-siswa" oninput="renderSiswa()">
+          <select id="filter-kelas-siswa" onchange="renderSiswa()">
+            <option value="">Semua Kelas</option>
+            <option value="X">Kelas X</option>
+            <option value="XI">Kelas XI</option>
+            <option value="XII">Kelas XII</option>
+          </select>
+          <select id="filter-status-siswa" onchange="renderSiswa()">
+            <option value="">Semua Status</option>
+            <option value="aktif">Aktif</option>
+            <option value="nonaktif">Nonaktif</option>
+          </select>
+          <span class="spacer"></span>
+          <button class="btn btn-primary btn-sm" onclick="openAddSiswa()">+ Tambah Siswa</button>
+        </div>
+        <table>
+          <thead><tr><th>NIS</th><th>Nama</th><th>Kelas</th><th>No. HP</th><th>Status</th><th>Terdaftar</th><th>Aksi</th></tr></thead>
+          <tbody id="siswa-tbody"></tbody>
+        </table>
+        <div id="siswa-empty" style="text-align:center;padding:32px;color:var(--text3);display:none;">Belum ada data siswa</div>
+        <div class="pagination" id="siswa-pagination"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="modal-siswa">
+  <div class="modal">
+    <div class="modal-title" id="modal-siswa-title">Tambah Siswa Baru</div>
+    <div class="form-grid">
+      <div class="form-group"><label>NIS *</label><input type="text" id="ms-nis" placeholder="Nomor Induk Siswa"></div>
+      <div class="form-group"><label>Nama Lengkap *</label><input type="text" id="ms-nama" placeholder="Nama siswa"></div>
+      <div class="form-group"><label>Kelas *</label>
+        <select id="ms-kelas">
+          <option value="">-- Pilih Kelas --</option>
+        </select>
+      </div>
+      <div class="form-group"><label>No. HP</label><input type="text" id="ms-hp" placeholder="08xxxxxxxxxx"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="ms-status">
+          <option value="aktif">Aktif</option>
+          <option value="nonaktif">Nonaktif</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-siswa')">Batal</button>
+      <button class="btn btn-primary" onclick="saveSiswa()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="modal-konfirm">
+  <div class="modal">
+    <div class="modal-title">Konfirmasi Pengembalian</div>
+    <div id="konfirm-content" class="detail-card"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-konfirm')">Batal</button>
+      <button class="btn btn-success" onclick="confirmKembali()">✅ Konfirmasi</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="modal-hapus">
+  <div class="modal">
+    <div class="modal-title">Hapus Data</div>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:20px;">Yakin ingin menghapus data ini? Aksi ini tidak bisa dibatalkan.</p>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-hapus')">Batal</button>
+      <button class="btn btn-danger" onclick="confirmHapus()">🗑 Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFIKASI -->
+<div id="notif"></div>
+
+<script>
+const KELAS_LIST = ['X-A','X-B','X-C','X-D','XI-A','XI-B','XI-C','XI-D','XII-A','XII-B','XII-C','XII-D'];
+
+let db = { students: [], loans: [] };
+let editSiswaId = null;
+let hapusType = null, hapusId = null;
+let pendingKembali = null;
+let siswaPage = 1;
+const PER_PAGE = 8;
+
+function loadDB() {
+  try {
+    const s = localStorage.getItem('simpen_students');
+    const l = localStorage.getItem('simpen_loans');
+    if (s) db.students = JSON.parse(s);
+    if (l) db.loans = JSON.parse(l);
+  } catch(e) {}
+  if (!db.students.length) seedData();
+}
+
+function saveDB() {
+  localStorage.setItem('simpen_students', JSON.stringify(db.students));
+  localStorage.setItem('simpen_loans', JSON.stringify(db.loans));
+}
+
+function seedData() {
+  const names = [
+    ['Ahmad Fauzi','XI-A'],['Budi Santoso','XI-B'],['Citra Dewi','X-A'],
+    ['Dian Pratama','XII-C'],['Eka Rahayu','X-B'],['Fajar Nugroho','XII-A'],
+    ['Gita Permata','XI-C'],['Hendra Kusuma','X-C'],['Indah Sari','XII-B'],
+    ['Joko Widodo','XI-D'],['Karina Putri','X-D'],['Lukman Hakim','XII-D'],
+    ['Maya Sari','XI-A'],['Nadia Rahmah','X-A'],['Oki Pratama','XII-C']
+  ];
+  db.students = names.map((n,i) => ({
+    id: i+1, nis: `2024${String(i+1).padStart(4,'0')}`,
+    nama: n[0], kelas: n[1], no_hp: `08${Math.floor(Math.random()*9e9+1e9)}`,
+    status: 'aktif', created: new Date(Date.now() - Math.random()*1e7).toISOString()
+  }));
+  const today = todayStr();
+  const alasans = ['Tugas','Emergency','Komunikasi','Tugas','Lainnya'];
+  for (let i = 0; i < 4; i++) {
+    const s = db.students[i];
+    const h = 7 + i; const m = Math.floor(Math.random()*50);
+    db.loans.push({
+      id: i+1, student_id: s.id,
+      ref: genRef(),
+      tanggal: today,
+      jam_pinjam: `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`,
+      jam_kembali: null,
+      alasan: alasans[i], catatan: '', kondisi_akhir: null,
+      status: 'aktif', created: new Date().toISOString()
+    });
+  }
+  db.loans.push({
+    id: 5, student_id: db.students[4].id,
+    ref: genRef(),
+    tanggal: today,
+    jam_pinjam: '07:30',
+    jam_kembali: '08:45',
+    alasan: 'Tugas', catatan: '', kondisi_akhir: 'Baik',
+    status: 'selesai', created: new Date().toISOString()
+  });
+  saveDB();
+}
+
+function genRef() {
+  const d = new Date(); const ds = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  return `LOAN-${ds}-${String(Math.floor(Math.random()*900)+100)}`;
+}
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function nowTimeStr() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function calcDurasi(jam_pinjam, jam_kembali) {
+  const [ph,pm] = jam_pinjam.split(':').map(Number);
+  const now = jam_kembali ? jam_kembali.split(':').map(Number) : [new Date().getHours(), new Date().getMinutes()];
+  const [kh,km] = now;
+  let mins = (kh*60+km) - (ph*60+pm);
+  if (mins < 0) mins += 1440;
+  const h = Math.floor(mins/60), m = mins%60;
+  return h > 0 ? `${h}j ${m}m` : `${m}m`;
+}
+
+function calcDurasiMins(jam_pinjam, jam_kembali) {
+  const [ph,pm] = jam_pinjam.split(':').map(Number);
+  const now = jam_kembali ? jam_kembali.split(':').map(Number) : [new Date().getHours(), new Date().getMinutes()];
+  const [kh,km] = now;
+  let mins = (kh*60+km) - (ph*60+pm);
+  if (mins < 0) mins += 1440;
+  return mins;
+}
+
+function getSiswa(id) { return db.students.find(s => s.id == id); }
+
+function showNotif(msg, type='success') {
+  const el = document.getElementById('notif');
+  el.textContent = msg; el.className = `show ${type}`;
+  setTimeout(() => el.className = '', 3000);
+}
+
+function goPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById(`page-${p}`).classList.add('active');
+  const titles = {dashboard:'Dashboard',pinjam:'Form Peminjaman',daftar:'HP Dipinjam',kembali:'Pengembalian',laporan:'Laporan Harian',siswa:'Data Siswa'};
+  document.getElementById('page-title').textContent = titles[p] || p;
+  document.querySelectorAll('.nav-item').forEach(el => {
+    if (el.getAttribute('onclick')?.includes(`'${p}'`)) el.classList.add('active');
+  });
+  if (p==='dashboard') renderDashboard();
+  if (p==='pinjam') initPinjam();
+  if (p==='daftar') renderDaftar();
+  if (p==='kembali') initKembali();
+  if (p==='laporan') initLaporan();
+  if (p==='siswa') renderSiswa();
+}
+
+function updateClock() {
+  const now = new Date();
+  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const date = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+  document.getElementById('clock-time').textContent = time;
+  document.getElementById('clock-date').textContent = date;
+  document.getElementById('topbar-date').textContent = date;
+}
+
+function renderDashboard() {
+  const aktif = db.loans.filter(l => l.status==='aktif');
+  const hariIni = db.loans.filter(l => l.tanggal===todayStr());
+  const lama = aktif.filter(l => calcDurasiMins(l.jam_pinjam) > 60);
+  document.getElementById('m-aktif').textContent = aktif.length;
+  document.getElementById('m-hari').textContent = hariIni.length;
+  document.getElementById('m-siswa').textContent = db.students.filter(s=>s.status==='aktif').length;
+  document.getElementById('m-lama').textContent = lama.length;
+  const tbody = document.getElementById('dash-tbody');
+  const empty = document.getElementById('dash-empty');
+  if (!aktif.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  tbody.innerHTML = aktif.map(l => {
+    const s = getSiswa(l.student_id);
+    const mins = calcDurasiMins(l.jam_pinjam);
+    const statusClass = mins>120?'badge-red':mins>60?'badge-yellow':'badge-green';
+    const statusText = mins>120?'Urgent':mins>60?'Lama':'Normal';
+    return `<tr><td style="color:var(--text)">${s?.nama||'-'}</td><td>${s?.kelas||'-'}</td><td>${l.jam_pinjam}</td><td>${calcDurasi(l.jam_pinjam)}</td><td>${l.alasan}</td><td><span class="badge ${statusClass}">${statusText}</span></td></tr>`;
+  }).join('');
+}
+
+function initPinjam() {
+  const sel = document.getElementById('f-siswa');
+  sel.innerHTML = '<option value="">-- Pilih Siswa --</option>' + db.students.filter(s=>s.status==='aktif').map(s => `<option value="${s.id}" data-kelas="${s.kelas}">${s.nama} (${s.kelas})</option>`).join('');
+  document.getElementById('f-jam').value = nowTimeStr();
+  document.getElementById('f-tanggal').value = todayStr();
+  document.getElementById('pinjam-success').style.display='none';
+}
+
+function autoFillKelas() {
+  const sel = document.getElementById('f-siswa');
+  const opt = sel.options[sel.selectedIndex];
+  document.getElementById('f-kelas').value = opt?.dataset?.kelas || '';
+}
+
+function resetPinjam() {
+  document.getElementById('f-siswa').value='';
+  document.getElementById('f-kelas').value='';
+  document.getElementById('f-jam').value=nowTimeStr();
+  document.getElementById('f-tanggal').value=todayStr();
+  document.getElementById('f-alasan').value='';
+  document.getElementById('f-catatan').value='';
+  document.getElementById('pinjam-success').style.display='none';
+}
+
+function submitPinjam() {
+  const sid = document.getElementById('f-siswa').value;
+  const jam = document.getElementById('f-jam').value;
+  const tgl = document.getElementById('f-tanggal').value;
+  const alasan = document.getElementById('f-alasan').value;
+  if (!sid||!jam||!tgl||!alasan) { showNotif('Harap lengkapi semua field wajib!','error'); return; }
+  const existing = db.loans.find(l=>l.student_id==sid&&l.status==='aktif');
+  if (existing) { showNotif('Siswa ini masih meminjam HP!','error'); return; }
+  const newId = db.loans.length ? Math.max(...db.loans.map(l=>l.id))+1 : 1;
+  const ref = genRef();
+  db.loans.push({
+    id: newId, student_id: parseInt(sid), ref,
+    tanggal: tgl, jam_pinjam: jam, jam_kembali: null,
+    alasan, catatan: document.getElementById('f-catatan').value,
+    kondisi_akhir: null, status: 'aktif', created: new Date().toISOString()
+  });
+  saveDB();
+  const s = getSiswa(sid);
+  const banner = document.getElementById('pinjam-success');
+  banner.innerHTML = `✅ Peminjaman berhasil dicatat! <br>Ref: <strong>${ref}</strong> — ${s?.nama} (${s?.kelas}) — ${jam}`;
+  banner.style.display='block';
+  resetPinjam();
+  showNotif(`Peminjaman ${s?.nama} berhasil dicatat!`);
+}
+
+function renderDaftar() {
+  const search = document.getElementById('search-daftar').value.toLowerCase();
+  const kelasFilter = document.getElementById('filter-kelas-daftar').value;
+  const aktif = db.loans.filter(l=>l.status==='aktif');
+  const filtered = aktif.filter(l => {
+    const s = getSiswa(l.student_id);
+    const matchName = !search || s?.nama?.toLowerCase().includes(search);
+    const matchKelas = !kelasFilter || s?.kelas?.startsWith(kelasFilter);
+    return matchName && matchKelas;
+  });
+  const tbody = document.getElementById('daftar-tbody');
+  const empty = document.getElementById('daftar-empty');
+  if (!filtered.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  tbody.innerHTML = filtered.map(l => {
+    const s = getSiswa(l.student_id);
+    const mins = calcDurasiMins(l.jam_pinjam);
+    const rowClass = mins>120?'status-danger':mins>60?'status-warning':'status-normal';
+    const statusClass = mins>120?'badge-red':mins>60?'badge-yellow':'badge-green';
+    const statusText = mins>120?'Urgent':mins>60?'Lama':'Normal';
+    return `<tr class="${rowClass}">
+      <td class="ref-number">${l.ref}</td>
+      <td style="color:var(--text);font-weight:500">${s?.nama||'-'}</td>
+      <td>${s?.kelas||'-'}</td><td>${l.jam_pinjam}</td>
+      <td><strong>${calcDurasi(l.jam_pinjam)}</strong></td>
+      <td>${l.alasan}</td>
+      <td><span class="badge ${statusClass}">${statusText}</span></td>
+      <td><button class="btn btn-success btn-sm" onclick="quickReturn(${l.id})">↩ Kembalikan</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function quickReturn(loanId) {
+  const l = db.loans.find(x=>x.id===loanId);
+  if (!l) return;
+  goPage('kembali');
+  setTimeout(() => {
+    document.getElementById('k-loan').value = loanId;
+    loadLoanDetail();
+  }, 100);
+}
+
+function initKembali() {
+  const aktif = db.loans.filter(l=>l.status==='aktif');
+  const sel = document.getElementById('k-loan');
+  sel.innerHTML = '<option value="">-- Pilih Peminjaman --</option>' + aktif.map(l => {
+    const s = getSiswa(l.student_id);
+    return `<option value="${l.id}">${s?.nama} — ${l.jam_pinjam} (${l.ref})</option>`;
+  }).join('');
+  document.getElementById('loan-detail').style.display='none';
+  document.getElementById('kembali-success').style.display='none';
+}
+
+function loadLoanDetail() {
+  const loanId = document.getElementById('k-loan').value;
+  if (!loanId) { document.getElementById('loan-detail').style.display='none'; return; }
+  const l = db.loans.find(x=>x.id==loanId);
+  if (!l) return;
+  const s = getSiswa(l.student_id);
+  document.getElementById('k-nama').textContent = s?.nama||'-';
+  document.getElementById('k-kelas-d').textContent = s?.kelas||'-';
+  document.getElementById('k-jam-pinjam').textContent = l.jam_pinjam;
+  document.getElementById('k-durasi').textContent = calcDurasi(l.jam_pinjam);
+  document.getElementById('k-alasan').textContent = l.alasan;
+  document.getElementById('k-jam-kembali').value = nowTimeStr();
+  document.getElementById('k-kondisi').value = '';
+  document.getElementById('loan-detail').style.display='block';
+  document.getElementById('rusak-detail-group').style.display='none';
+}
+
+function toggleRusak() {
+  const v = document.getElementById('k-kondisi').value;
+  document.getElementById('rusak-detail-group').style.display = (v==='Sedikit Rusak'||v==='Rusak Parah'||v==='Hilang') ? 'block' : 'none';
+}
+
+function submitKembali() {
+  const loanId = document.getElementById('k-loan').value;
+  const jam = document.getElementById('k-jam-kembali').value;
+  const kondisi = document.getElementById('k-kondisi').value;
+  if (!loanId||!jam||!kondisi) { showNotif('Harap lengkapi semua field!','error'); return; }
+  const l = db.loans.find(x=>x.id==loanId);
+  const s = getSiswa(l.student_id);
+  const rusak = document.getElementById('k-rusak').value;
+  pendingKembali = { loanId, jam, kondisi, rusak };
+  const konfirm = document.getElementById('konfirm-content');
+  konfirm.innerHTML = `
+    <div class="detail-row"><span class="detail-label">Siswa</span><span class="detail-value">${s?.nama}</span></div>
+    <div class="detail-row"><span class="detail-label">Jam Pinjam</span><span class="detail-value">${l.jam_pinjam}</span></div>
+    <div class="detail-row"><span class="detail-label">Jam Kembali</span><span class="detail-value">${jam}</span></div>
+    <div class="detail-row"><span class="detail-label">Total Durasi</span><span class="detail-value">${calcDurasi(l.jam_pinjam, jam)}</span></div>
+    <div class="detail-row"><span class="detail-label">Kondisi HP</span><span class="detail-value">${kondisi}</span></div>
+    ${rusak ? `<div class="detail-row"><span class="detail-label">Keterangan</span><span class="detail-value">${rusak}</span></div>` : ''}
+  `;
+  document.getElementById('modal-konfirm').classList.add('show');
+}
+
+function confirmKembali() {
+  if (!pendingKembali) return;
+  const { loanId, jam, kondisi, rusak } = pendingKembali;
+  const l = db.loans.find(x=>x.id==loanId);
+  l.jam_kembali = jam;
+  l.kondisi_akhir = kondisi + (rusak ? ` — ${rusak}` : '');
+  l.status = 'selesai';
+  saveDB();
+  closeModal('modal-konfirm');
+  const s = getSiswa(l.student_id);
+  const banner = document.getElementById('kembali-success');
+  banner.innerHTML = `✅ HP ${s?.nama} berhasil dikembalikan! Kondisi: <strong>${kondisi}</strong> | Durasi: ${calcDurasi(l.jam_pinjam, jam)}`;
+  banner.style.display='block';
+  showNotif(`Pengembalian ${s?.nama} berhasil!`);
+  initKembali();
+  pendingKembali = null;
+}
+
+function initLaporan() {
+  document.getElementById('lap-tanggal').value = todayStr();
+  renderLaporan();
+}
+
+function renderLaporan() {
+  const tgl = document.getElementById('lap-tanggal').value || todayStr();
+  const loans = db.loans.filter(l=>l.tanggal===tgl);
+  const selesai = loans.filter(l=>l.status==='selesai');
+  const aktif = loans.filter(l=>l.status==='aktif');
+  document.getElementById('l-total').textContent = loans.length;
+  document.getElementById('l-selesai').textContent = selesai.length;
+  document.getElementById('l-aktif').textContent = aktif.length;
+  let avgStr = '-';
+  if (selesai.length) {
+    const total = selesai.reduce((acc,l) => acc + calcDurasiMins(l.jam_pinjam, l.jam_kembali), 0);
+    const avg = Math.round(total/selesai.length);
+    avgStr = avg >= 60 ? `${Math.floor(avg/60)}j ${avg%60}m` : `${avg}m`;
+  }
+  document.getElementById('l-avg').textContent = avgStr;
+  const tbody = document.getElementById('laporan-tbody');
+  const empty = document.getElementById('lap-empty');
+  if (!loans.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  tbody.innerHTML = loans.map(l => {
+    const s = getSiswa(l.student_id);
+    const statusBadge = l.status==='selesai' ? 'badge-green' : 'badge-blue';
+    return `<tr>
+      <td class="ref-number">${l.ref}</td>
+      <td style="color:var(--text)">${s?.nama||'-'}</td><td>${s?.kelas||'-'}</td>
+      <td>${l.jam_pinjam}</td>
+      <td>${l.jam_kembali||'—'}</td>
+      <td>${l.jam_kembali ? calcDurasi(l.jam_pinjam, l.jam_kembali) : calcDurasi(l.jam_pinjam)}</td>
+      <td>${l.alasan}</td>
+      <td>${l.kondisi_akhir||'—'}</td>
+      <td><span class="badge ${statusBadge}">${l.status==='selesai'?'Selesai':'Aktif'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSiswa() {
+  const search = document.getElementById('search-siswa').value.toLowerCase();
+  const kelasFilter = document.getElementById('filter-kelas-siswa').value;
+  const statusFilter = document.getElementById('filter-status-siswa').value;
+  let filtered = db.students.filter(s => {
+    const matchSearch = !search || s.nama.toLowerCase().includes(search) || s.nis.includes(search);
+    const matchKelas = !kelasFilter || s.kelas.startsWith(kelasFilter);
+    const matchStatus = !statusFilter || s.status===statusFilter;
+    return matchSearch && matchKelas && matchStatus;
+  });
+  const total = filtered.length;
+  const totalPages = Math.ceil(total/PER_PAGE);
+  if (siswaPage > totalPages) siswaPage = 1;
+  const start = (siswaPage-1)*PER_PAGE;
+  const paged = filtered.slice(start, start+PER_PAGE);
+  const tbody = document.getElementById('siswa-tbody');
+  const empty = document.getElementById('siswa-empty');
+  if (!paged.length) { tbody.innerHTML=''; empty.style.display='block'; } else {
+    empty.style.display='none';
+    tbody.innerHTML = paged.map(s => {
+      const created = new Date(s.created).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+      return `<tr>
+        <td class="ref-number">${s.nis}</td>
+        <td style="color:var(--text);font-weight:500">${s.nama}</td>
+        <td>${s.kelas}</td><td>${s.no_hp||'-'}</td>
+        <td><span class="badge ${s.status==='aktif'?'badge-green':'badge-yellow'}">${s.status}</span></td>
+        <td style="font-size:12px;color:var(--text3)">${created}</td>
+        <td style="display:flex;gap:4px;">
+          <button class="btn btn-secondary btn-sm" onclick="editSiswa(${s.id})">✏</button>
+          <button class="btn btn-danger btn-sm" onclick="hapusSiswa(${s.id})">🗑</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  const pag = document.getElementById('siswa-pagination');
+  pag.innerHTML = `<span style="font-size:12px;color:var(--text3);margin-right:8px;">${start+1}-${Math.min(start+PER_PAGE,total)} dari ${total} siswa</span>`;
+  for (let i=1;i<=totalPages;i++) {
+    pag.innerHTML += `<button class="page-btn ${i===siswaPage?'active':''}" onclick="siswaPage=${i};renderSiswa()">${i}</button>`;
+  }
+}
+
+function initModalKelas() {
+  const sel = document.getElementById('ms-kelas');
+  sel.innerHTML = '<option value="">-- Pilih Kelas --</option>' + KELAS_LIST.map(k=>`<option value="${k}">${k}</option>`).join('');
+}
+
+function openAddSiswa() {
+  editSiswaId = null;
+  document.getElementById('modal-siswa-title').textContent = 'Tambah Siswa Baru';
+  document.getElementById('ms-nis').value='';
+  document.getElementById('ms-nama').value='';
+  document.getElementById('ms-kelas').value='';
+  document.getElementById('ms-hp').value='';
+  document.getElementById('ms-status').value='aktif';
+  document.getElementById('modal-siswa').classList.add('show');
+}
+
+function editSiswa(id) {
+  const s = db.students.find(x=>x.id===id);
+  if (!s) return;
+  editSiswaId = id;
+  document.getElementById('modal-siswa-title').textContent = 'Edit Data Siswa';
+  document.getElementById('ms-nis').value = s.nis;
+  document.getElementById('ms-nama').value = s.nama;
+  document.getElementById('ms-kelas').value = s.kelas;
+  document.getElementById('ms-hp').value = s.no_hp||'';
+  document.getElementById('ms-status').value = s.status;
+  document.getElementById('modal-siswa').classList.add('show');
+}
+
+function saveSiswa() {
+  const nis = document.getElementById('ms-nis').value.trim();
+  const nama = document.getElementById('ms-nama').value.trim();
+  const kelas = document.getElementById('ms-kelas').value;
+  const hp = document.getElementById('ms-hp').value.trim();
+  const status = document.getElementById('ms-status').value;
+  if (!nis||!nama||!kelas) { showNotif('NIS, Nama, dan Kelas wajib diisi!','error'); return; }
+  const dupNIS = db.students.find(s=>s.nis===nis && s.id!==editSiswaId);
+  if (dupNIS) { showNotif('NIS sudah digunakan!','error'); return; }
+  if (editSiswaId) {
+    const s = db.students.find(x=>x.id===editSiswaId);
+    Object.assign(s, {nis,nama,kelas,no_hp:hp,status,updated:new Date().toISOString()});
+    showNotif(`Data ${nama} berhasil diperbarui!`);
+  } else {
+    const newId = db.students.length ? Math.max(...db.students.map(s=>s.id))+1 : 1;
+    db.students.push({id:newId,nis,nama,kelas,no_hp:hp,status,created:new Date().toISOString()});
+    showNotif(`Siswa ${nama} berhasil ditambahkan!`);
+  }
+  saveDB();
+  closeModal('modal-siswa');
+  renderSiswa();
+  initPinjam();
+}
+
+function hapusSiswa(id) {
+  hapusType='siswa'; hapusId=id;
+  document.getElementById('modal-hapus').classList.add('show');
+}
+
+function confirmHapus() {
+  if (hapusType==='siswa') {
+    const s = db.students.find(x=>x.id===hapusId);
+    const hasLoan = db.loans.some(l=>l.student_id===hapusId&&l.status==='aktif');
+    if (hasLoan) { showNotif('Siswa masih memiliki peminjaman aktif!','error'); closeModal('modal-hapus'); return; }
+    db.students = db.students.filter(x=>x.id!==hapusId);
+    saveDB(); renderSiswa();
+    showNotif(`Data ${s?.nama} berhasil dihapus!`);
+  }
+  closeModal('modal-hapus');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function initKelasFilter() {
+  const sel = document.getElementById('filter-kelas-daftar');
+  sel.innerHTML = '<option value="">Semua Kelas</option><option value="X">Kelas X</option><option value="XI">Kelas XI</option><option value="XII">Kelas XII</option>';
+}
+
+function init() {
+  loadDB();
+  initModalKelas();
+  initKelasFilter();
+  updateClock();
+  setInterval(updateClock, 1000);
+  setInterval(() => {
+    if (document.getElementById('page-daftar').classList.contains('active')) renderDaftar();
+    if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+  }, 60000);
+  renderDashboard();
+}
+
+init();
+</script>
+</body>
+</html>

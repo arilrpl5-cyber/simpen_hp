@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="scene">
+
+  
+  <div class="login-card">
+    <h2>Member Login</h2>
+    <p class="subtitle">Turn on the lamp to continue</p>
+
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" placeholder="Enter your username" />
+    </div>
+
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" placeholder="••••••••" />
+    </div>
+
+    <button class="btn-signin">Sign In</button>
+
+    <div class="divider"><span>or</span></div>
+
+    <div class="form-footer">
+      Don't have an account? <a href="#">Register</a>
+    </div>
+  </div>
+
+  
+  <div class="off-hint">Turn on the lamp →</div>
+
+  
+  <div class="lamp-section" id="lampSection">
+    <div class="ceiling-bar"></div>
+    <div class="wire"></div>
+
+    <div class="lamp-shade-wrap" onclick="toggleLamp()" title="Click to toggle lamp">
+      <div class="lamp-shade"></div>
+      <div class="lamp-rim"></div>
+      <div class="lamp-bulb" id="bulb"></div>
+      <div class="light-cone"></div>
+    </div>
+
+    <div class="cord" onclick="toggleLamp()"></div>
+    <div class="cord-knob" onclick="toggleLamp()" id="knob"></div>
+
+    <div class="lamp-hint">Lamp</div>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
